@@ -45,7 +45,7 @@ public struct PresentationCompositionSegment : IPresentationGraphicSegment
         public ushort CroppingVerticalPosition { get; set; }
         public ushort CroppingWidth { get; set; }
         public ushort CroppingHeightPosition { get; set; }
-        public bool HasCropping => (CroppedFlag & 0x80) != 0;
+        public bool HasCropping => (CroppedFlag & 0x40) != 0;
     }
     
     /// <inheritdoc />
