@@ -53,16 +53,16 @@ public struct ObjectDefinitionSegment : IPresentationGraphicSegment
         
         // This is the total data length of ALL segments.
         // We need to add all data segments to encode the image.
-        DataLength = reader.ReadUInt24();
         if (IsFirstInSequence)
         {
+            DataLength = reader.ReadUInt24();
             Width = reader.ReadUInt16();
             Height = reader.ReadUInt16();
             Data = reader.ReadBytes(segmentLength - 11);
         }
         else
         {
-            Data = reader.ReadBytes(segmentLength - 7);
+            Data = reader.ReadBytes(segmentLength - 4);
         }
     }
 
@@ -72,9 +72,9 @@ public struct ObjectDefinitionSegment : IPresentationGraphicSegment
         writer.Write(Id);
         writer.Write(VersionNumber);
         writer.Write(LastInSequenceFlag);
-        writer.WriteUInt24(DataLength);
         if (IsFirstInSequence)
         {
+            writer.WriteUInt24(DataLength);
             writer.Write(Width);
             writer.Write(Height);
             writer.Write(Data);
@@ -94,7 +94,7 @@ public struct ObjectDefinitionSegment : IPresentationGraphicSegment
         }
         else
         {
-            return (ushort)(7 + Data.Length);
+            return (ushort)(4 + Data.Length);
         }
     }
 }
