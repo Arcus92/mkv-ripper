@@ -31,11 +31,6 @@ public struct PaletteDefinitionSegment : IPresentationGraphicSegment
         public byte Cb { get; init; }
         public byte A { get; init; }
     }
-
-    /// <summary>
-    /// Gets if there is an empty palette.
-    /// </summary>
-    public bool IsEmpty => Entries.Count == 0;
     
     /// <inheritdoc />
     public void Read(BigEndianBinaryReader reader, ushort segmentLength)

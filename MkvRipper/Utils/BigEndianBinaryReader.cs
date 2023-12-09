@@ -10,7 +10,7 @@ public class BigEndianBinaryReader : IDisposable
         BaseStream = stream;
         _reader = new BinaryReader(BaseStream);
     }
-    
+
     /// <summary>
     /// Gets the base stream.
     /// </summary>
@@ -21,19 +21,43 @@ public class BigEndianBinaryReader : IDisposable
     /// </summary>
     private readonly BinaryReader _reader;
 
+    /// <summary>
+    /// The current position.
+    /// </summary>
+    private long _position;
+
+    /// <summary>
+    /// Gets and sets the byte position in the given stream.
+    /// </summary>
+    public long Position
+    {
+        get => _position;
+        set
+        {
+            if (_position == value) return;
+            _position = value;
+            BaseStream.Position = value;
+        }
+    }
+
+    /// <summary>
+    /// Gets the length of the buffer to read.
+    /// </summary>
+    public long Length => BaseStream.Length;
+    
     /// <inheritdoc />
     public void Dispose()
     {
         BaseStream.Dispose();
     }
     
-
     /// <summary>
     /// Reads an 8-bit byte.
     /// </summary>
     /// <returns></returns>
     public byte ReadByte()
     {
+        _position++;
         return _reader.ReadByte();
     }
     
@@ -104,6 +128,7 @@ public class BigEndianBinaryReader : IDisposable
     /// <returns></returns>
     public byte[] ReadBytes(int count)
     {
+        _position += count;
         return _reader.ReadBytes(count);
     }
 }

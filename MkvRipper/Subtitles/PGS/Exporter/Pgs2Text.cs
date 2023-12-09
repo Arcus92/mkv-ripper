@@ -39,7 +39,7 @@ public static class Pgs2Text
                 currentText = "";
             }
             
-            if (displaySet.ObjectDefinition.IsEmpty) continue;
+            if (displaySet.ObjectDefinitions.Count == 0) continue;
 
             using var pix = displaySet.ToPix();
             using var page = tesseract.Process(pix);
@@ -59,10 +59,26 @@ public static class Pgs2Text
     /// <returns></returns>
     public static Pix ToPix(this DisplaySet displaySet)
     {
-        var pix = Pix.Create(displaySet.ObjectDefinition.Width, displaySet.ObjectDefinition.Height, 32);
+        var paletteId = displaySet.PresentationComposition.PaletteId;
+        ushort width = 0;
+        ushort height = 0;
+        var data = new List<byte>();
+        foreach (var ods in displaySet.ObjectDefinitions)
+        {
+            if (ods.IsFirstInSequence)
+            {
+                width = ods.Width;
+                height = ods.Height;
+            }
+            
+            data.AddRange(ods.Data);
+        }
+        
+        var pix = Pix.Create(width, height, 32);
         var pixData = pix.GetData();
-                    
-        RunLengthEncoding.Encode(displaySet.ObjectDefinition.Data, (pixData, displaySet.PaletteDefinition), WriteColorToPix);
+
+        var palette = displaySet.PaletteDefinitions.First(p => p.Id == paletteId);
+        RunLengthEncoding.Encode(data.ToArray(), (pixData, palette), WriteColorToPix);
         return pix;
     }
     

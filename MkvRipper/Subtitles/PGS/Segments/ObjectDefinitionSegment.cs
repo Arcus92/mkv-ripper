@@ -27,12 +27,22 @@ public struct ObjectDefinitionSegment : IPresentationGraphicSegment
     public byte LastInSequenceFlag { get; set; }
     public ushort Width { get; set; }
     public ushort Height { get; set; }
+    public int DataLength { get; set; }
     public byte[] Data { get; set; }
+
+    private const byte LastInSequence = 0x40;
+    private const byte FirstInSequence = 0x80;
+    private const byte FirstAndLastInSequence = LastInSequence | FirstInSequence;
+
+    /// <summary>
+    /// Gets if this is the first element in the sequence.
+    /// </summary>
+    public bool IsFirstInSequence => (LastInSequenceFlag & FirstInSequence) != 0;
     
     /// <summary>
-    /// Gets if there is an empty object.
+    /// Gets if this is the last element in the sequence.
     /// </summary>
-    public bool IsEmpty => Data.Length == 0;
+    public bool IsLastInSequence => (LastInSequenceFlag & LastInSequence) != 0;
 
     /// <inheritdoc />
     public void Read(BigEndianBinaryReader reader, ushort segmentLength)
@@ -40,10 +50,20 @@ public struct ObjectDefinitionSegment : IPresentationGraphicSegment
         Id = reader.ReadUInt16();
         VersionNumber = reader.ReadByte();
         LastInSequenceFlag = reader.ReadByte();
-        var length = reader.ReadUInt24();
-        Width = reader.ReadUInt16();
-        Height = reader.ReadUInt16();
-        Data = reader.ReadBytes(length - 4);
+        
+        // This is the total data length of ALL segments.
+        // We need to add all data segments to encode the image.
+        DataLength = reader.ReadUInt24();
+        if (IsFirstInSequence)
+        {
+            Width = reader.ReadUInt16();
+            Height = reader.ReadUInt16();
+            Data = reader.ReadBytes(segmentLength - 11);
+        }
+        else
+        {
+            Data = reader.ReadBytes(segmentLength - 7);
+        }
     }
 
     /// <inheritdoc />
@@ -52,15 +72,29 @@ public struct ObjectDefinitionSegment : IPresentationGraphicSegment
         writer.Write(Id);
         writer.Write(VersionNumber);
         writer.Write(LastInSequenceFlag);
-        writer.WriteUInt24(Data.Length + 4);
-        writer.Write(Width);
-        writer.Write(Height);
-        writer.Write(Data);
+        writer.WriteUInt24(DataLength);
+        if (IsFirstInSequence)
+        {
+            writer.Write(Width);
+            writer.Write(Height);
+            writer.Write(Data);
+        }
+        else
+        {
+            writer.Write(Data);
+        }
     }
 
     /// <inheritdoc />
     public ushort GetSegmentLength()
     {
-        return (ushort)(11 + Data.Length);
+        if (IsFirstInSequence)
+        {
+            return (ushort)(11 + Data.Length);
+        }
+        else
+        {
+            return (ushort)(7 + Data.Length);
+        }
     }
 }
