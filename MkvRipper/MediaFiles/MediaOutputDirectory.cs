@@ -18,20 +18,20 @@ public class MediaOutputDirectory
     /// <returns></returns>
     public IEnumerable<MediaOutput> EnumerateOutputs()
     {
-        /*var fileNames = Directory.EnumerateFiles(Path, "*.mp4").Select(System.IO.Path.GetFileName).ToList();
-
-        while (fileNames.Count > 0)
-        {
-            var fileName = fileNames[0];
-            if (fileName is null) throw new InvalidDataException();
-            var pos = fileName.IndexOf('.');
-            
-        }*/
-        
         foreach (var path in Directory.EnumerateFiles(Path, "*.mp4").Order())
         {
             var baseName = System.IO.Path.GetFileNameWithoutExtension(path);
             yield return new MediaOutput(this, baseName);
         }
+    }
+    
+    /// <summary>
+    /// Returns all files with the given extension in the output directory.
+    /// </summary>
+    /// <param name="extension">The file extension starting with a dot.</param>
+    /// <returns></returns>
+    public IEnumerable<string> EnumerateFiles(string extension)
+    {
+        return Directory.EnumerateFiles(Path, $"*{extension}").Order();
     }
 }

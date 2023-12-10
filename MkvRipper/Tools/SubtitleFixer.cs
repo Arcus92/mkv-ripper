@@ -7,15 +7,38 @@ namespace MkvRipper.Tools;
 /// </summary>
 public class SubtitleFixer
 {
-    public void AutoRenameSubtitle(MediaOutput output)
+    private record SubtitleFile(string Path, string Language, int TrackNumber);
+
+    private const bool ForcedSubtitleRule = false;
+
+    /// <summary>
+    /// Tries to fix the subtitles in the output directory.
+    /// </summary>
+    /// <param name="outputDirectory">The output directory.</param>
+    public async Task ExecuteAsync(MediaOutputDirectory outputDirectory)
+    {
+        await FixEmptySrtFilesAsync(outputDirectory);
+        foreach (var output in outputDirectory.EnumerateOutputs())
+        {
+            AutoRenameSubtitle(output);
+        }
+    }
+    
+    /// <summary>
+    /// Rename the subtitle tracks and try to guess the forced subtitles by naming conventions.
+    /// </summary>
+    /// <param name="output">The video output.</param>
+    private void AutoRenameSubtitle(MediaOutput output)
     {
         AutoRenameSubtitle(output, ".sup");
         AutoRenameSubtitle(output, ".srt");
     }
-
-    private record SubtitleFile(string Path, string Language, int TrackNumber);
-
-    private const bool ForcedSubtitleRule = false;
+    
+    /// <summary>
+    /// Rename the subtitle tracks and try to guess the forced subtitles by naming conventions.
+    /// </summary>
+    /// <param name="output">The video output.</param>
+    /// <param name="extension">The subtitle extension.</param>
     private void AutoRenameSubtitle(MediaOutput output, string extension)
     {
         // Collect all subtitles and extract the language and track number.
@@ -73,6 +96,27 @@ public class SubtitleFixer
                 var newFileName = Path.Combine(output.Directory.Path, $"{output.BaseName}{newExtension}");
                 File.Move(subtitle.Path, newFileName);
             }
+        }
+    }
+
+    /// <summary>
+    /// Searches for empty .srt files and adding a generic empty subtitle line, so tools like Jellyfin wont ignore that
+    /// track.
+    /// </summary>
+    /// <param name="output">The output directory.</param>
+    private async Task FixEmptySrtFilesAsync(MediaOutputDirectory output)
+    {
+        foreach (var file in output.EnumerateFiles(".srt"))
+        {
+            var fileInfo = new FileInfo(file);
+            if (fileInfo.Length != 0) continue;
+
+            await using var writer = new StreamWriter(file);
+            
+            await writer.WriteLineAsync("1");
+            await writer.WriteLineAsync("00:00:00,000 --> 00:00:000,000");
+            await writer.WriteLineAsync();
+            await writer.WriteLineAsync();
         }
     }
 }

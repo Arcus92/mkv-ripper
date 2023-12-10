@@ -70,10 +70,7 @@ while (true)
     if (input.Equals("f", StringComparison.OrdinalIgnoreCase))
     {
         var tool = new SubtitleFixer();
-        foreach (var output in outputs)
-        {
-            tool.AutoRenameSubtitle(output);
-        }
+        await tool.ExecuteAsync(mediaOutputDirectory);
     }
     
     // Batch renaming
