@@ -34,6 +34,15 @@ public class CommandBuilder
     }
 
     /// <summary>
+    /// Sets the decryption key.
+    /// </summary>
+    /// <param name="key">The decryption key.</param>
+    public void DecryptionKey(string key)
+    {
+        _arguments.Append($"-decryption_key {key} ");
+    }
+    
+    /// <summary>
     /// Forces an output format.
     /// </summary>
     /// <param name="extension">The output file extension without dot.</param>
@@ -143,6 +152,44 @@ public class CommandBuilder
         _arguments.Append($"-map_chapters {inputId} ");
     }
 
+    /// <summary>
+    /// Seeks to the given timestamp.
+    /// </summary>
+    /// <param name="value">The timestamp to seek to.</param>
+    public void Seek(TimeSpan value)
+    {
+        _arguments.Append($"-ss {value} ");
+    }
+    
+    /// <summary>
+    /// Seeks to the given timestamp in the input file.
+    /// </summary>
+    /// <param name="value">The timestamp to seek to.</param>
+    /// <param name="inputId">The id of the input file</param>
+    public void Seek(TimeSpan value, int inputId)
+    {
+        _arguments.Append($"-ss {value} {inputId} ");
+    }
+    
+    /// <summary>
+    /// Sets the duration.
+    /// </summary>
+    /// <param name="value">The duration.</param>
+    public void Duration(TimeSpan value)
+    {
+        _arguments.Append($"-t {value} ");
+    }
+    
+    /// <summary>
+    /// Sets the duration of the input file.
+    /// </summary>
+    /// <param name="value">The duration.</param>
+    /// <param name="inputId">The id of the input file</param>
+    public void Duration(TimeSpan value, int inputId)
+    {
+        _arguments.Append($"-t {value} {inputId} ");
+    }
+    
     /// <summary>
     /// Defines the output path. Must be the last argument.
     /// </summary>
