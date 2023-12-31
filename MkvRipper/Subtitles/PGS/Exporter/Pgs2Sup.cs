@@ -26,7 +26,7 @@ public static class Pgs2Sup
     public static async Task WriteToSupFileAsync(this IPresentationGraphicStream pgs, Stream stream)
     {
         using var writer = new BigEndianBinaryWriter(stream);
-        var displaySets = pgs.ReadAsync();
+        var displaySets = pgs.ReadAndCleanUpAsync();
         await foreach (var displaySet in displaySets)
         {
             displaySet.Write(writer, includeHeader: true);

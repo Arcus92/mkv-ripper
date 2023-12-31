@@ -32,7 +32,7 @@ public static class Pgs2Text
         var activeCompositionObjects = new List<ActiveCompositionObject>();
         using var tesseract = await TesseractManager.Shared.GetEngineAsync(language);
         
-        await foreach (var displaySet in pgs.ReadAsync())
+        await foreach (var displaySet in pgs.ReadAndCleanUpAsync())
         {
             var time = TimeSpan.FromMilliseconds(displaySet.PresentationTimestamp / 90.0);
 
