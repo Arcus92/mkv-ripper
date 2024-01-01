@@ -26,7 +26,7 @@ public class ExportMp4Task : IExportMediaTask
     {
         var fileName = GetPath(output);
         
-        var ffmpeg = new FFmpeg.Engine();
+        var ffmpeg = new Engine();
         await FileHandler.HandleAsync(fileName, async path =>
         {
             await ffmpeg.ConvertAsync(b =>
@@ -42,7 +42,10 @@ public class ExportMp4Task : IExportMediaTask
                 b.Format("mp4");
                 b.OverwriteOutput(false);
                 b.Output(path);
-            }, CancellationToken.None);
+            }, onUpdate: (update) =>
+            {
+                Console.WriteLine($"[{update.Percentage * 100:0}%] {update.Current:hh\\:mm\\:ss} / {update.Duration:hh\\:mm\\:ss}");
+            });
         });
     }
 }

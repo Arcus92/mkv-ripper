@@ -1,5 +1,5 @@
 using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using MkvRipper.Utils;
 
 namespace MkvRipper.FFmpeg;
@@ -15,25 +15,29 @@ public class Engine
     /// Gets the path to the ffmpeg binary.
     /// </summary>
     public string Binary { get; }
-    
+
     /// <summary>
     /// Runs ffmpeg with the given arguments.
     /// </summary>
     /// <param name="builderCallback">The argument builder callback.</param>
+    /// <param name="onUpdate">The status update event.</param>
     /// <param name="cancellationToken">The cancellation token</param>
-    public async Task ConvertAsync(Action<CommandBuilder> builderCallback, CancellationToken cancellationToken)
+    public async Task ConvertAsync(Action<CommandBuilder> builderCallback, Action<ConverterUpdate>? onUpdate = null,
+        CancellationToken cancellationToken = default)
     {
         var builder = new CommandBuilder();
         builderCallback(builder);
-        await ConvertAsync(builder.Arguments, cancellationToken);
+        await ConvertAsync(builder.Arguments, onUpdate, cancellationToken);
     }
-    
+
     /// <summary>
     /// Runs ffmpeg with the given arguments.
     /// </summary>
     /// <param name="arguments">The ffmpeg arguments.</param>
+    /// <param name="onUpdate">The status update event.</param>
     /// <param name="cancellationToken">The cancellation token</param>
-    public async Task ConvertAsync(string arguments, CancellationToken cancellationToken)
+    public async Task ConvertAsync(string arguments, Action<ConverterUpdate>? onUpdate = null,
+        CancellationToken cancellationToken = default)
     {
         var process = new Process();
         process.StartInfo = new ProcessStartInfo()
@@ -44,18 +48,50 @@ public class Engine
             RedirectStandardError = true,
             RedirectStandardOutput = true
         };
-        process.OutputDataReceived += (_, args) =>
-        {
-            Console.WriteLine(args.Data);
-        };
-        process.ErrorDataReceived += (_, args) =>
-        {
-            Console.Error.WriteLine(args.Data);
-        };
         
         process.Start();
-        process.BeginOutputReadLine();
-        process.BeginErrorReadLine();
+
+        var inputs = new List<InputMetadata>();
+        var intentReader = new IntentTextReader(process.StandardError, 2);
+        await foreach (var lineRoot in intentReader.ReadBlockAsync().WithCancellation(cancellationToken))
+        {
+            if (lineRoot.StartsWith("Input #"))
+            {
+                var input = await ReadInputMedaDataAsync(intentReader);
+                inputs.Add(input);
+            }
+
+            // Frame update
+            if (lineRoot.StartsWith("frame="))
+            {
+                // No need to check frame updates
+                if (onUpdate is null) continue;
+                
+                var frameStart = lineRoot.IndexOf("time=", StringComparison.Ordinal);
+                if (frameStart < 0) continue;
+                frameStart += 5;
+                var frameEnd = lineRoot.IndexOf("bitrate=", frameStart, StringComparison.Ordinal);
+                if (frameEnd < 0) continue;
+                var timeText = lineRoot.Substring(frameStart, frameEnd - frameStart).Trim();
+                if (!TimeSpan.TryParse(timeText, out var currentTime)) continue;
+
+                // We need one input to determined the total duration. 
+                // Currently this won't handle offsets or lengths.
+                if (inputs.Count <= 0) continue;
+                var duration = inputs[0].Duration;
+                var percentage = currentTime.TotalSeconds / duration.TotalSeconds;
+                var update = new ConverterUpdate()
+                {
+                    Inputs = inputs,
+                    Duration = duration,
+                    Current = currentTime,
+                    Percentage = percentage
+                };
+
+                onUpdate(update);
+            }
+        }
+        
         await process.WaitForExitAsync(cancellationToken);
         if (process.ExitCode != 0)
         {
@@ -94,80 +130,99 @@ public class Engine
         {
             if (lineRoot.StartsWith("Input #"))
             {
-                var input = new InputMetadata();
-                var streams = new List<StreamMetadata>();
-                await foreach (var lineInput in intentReader.BeginAndReadBlockAsync())
+                return await ReadInputMedaDataAsync(intentReader);
+            }
+        }
+        
+        throw new ArgumentException("No input stream found!");
+    }
+
+    /// <summary>
+    /// Reads the FFmpeg output starting by an "Input#" line and returns the input information.
+    /// </summary>
+    /// <param name="intentReader">The current reader.</param>
+    /// <returns>Returns the input metadata.</returns>
+    private static async Task<InputMetadata> ReadInputMedaDataAsync(IntentTextReader intentReader)
+    {
+        var input = new InputMetadata();
+        var streams = new List<StreamMetadata>();
+        await foreach (var lineInput in intentReader.BeginAndReadBlockAsync())
+        {
+            if (lineInput.StartsWith("Metadata:"))
+            {
+                await foreach (var (name, value) in intentReader.BeginAndReadBlockPropertiesAsync())
                 {
-                    if (lineInput.StartsWith("Metadata:"))
+                    switch (name)
+                    {
+                        case "title":
+                            input.Title = value;
+                            break;
+                        case "encoder":
+                            input.Encoder = value;
+                            break;
+                    }
+                }
+            }
+            else if (lineInput.StartsWith("Duration:"))
+            {
+                const int timeStart = 9;
+                var timeEnd = lineInput.IndexOf(',', StringComparison.Ordinal);
+                if (timeEnd < 0) continue;
+                var timeText = lineInput.Substring(timeStart, timeEnd - timeStart).Trim();
+                if (!TimeSpan.TryParse(timeText, out var time)) continue;
+                input.Duration = time;
+            }
+            else if (lineInput.StartsWith("Chapters:"))
+            {
+                var chapters = new List<ChapterMetadata>();
+                await foreach (var lineChapters in intentReader.BeginAndReadBlockAsync())
+                {
+                    var chapter = ReadChapterMetadataByLine(lineChapters);
+                    await foreach (var lineChapter in intentReader.BeginAndReadBlockAsync())
+                    {
+                        if (lineChapter.StartsWith("Metadata:"))
+                        {
+                            await foreach (var (name, value) in intentReader.BeginAndReadBlockPropertiesAsync())
+                            {
+                                switch (name)
+                                {
+                                    case "title":
+                                        chapter.Title = value;
+                                        break;
+                                }
+                            }
+                        }
+                    }
+                    chapters.Add(chapter);
+                }
+
+                input.Chapters = chapters.ToArray();
+            }
+            else if (lineInput.StartsWith("Stream #"))
+            {
+                var stream = CreateStreamMetadataByLine(lineInput);
+                await foreach (var lineStream in intentReader.BeginAndReadBlockAsync())
+                {
+                    if (lineStream.StartsWith("Metadata:"))
                     {
                         await foreach (var (name, value) in intentReader.BeginAndReadBlockPropertiesAsync())
                         {
                             switch (name)
                             {
                                 case "title":
-                                    input.Title = value;
-                                    break;
-                                case "encoder":
-                                    input.Encoder = value;
+                                    stream.Title = value;
                                     break;
                             }
                         }
-                    }
-                    else if (lineInput.StartsWith("Chapters:"))
-                    {
-                        var chapters = new List<ChapterMetadata>();
-                        await foreach (var lineChapters in intentReader.BeginAndReadBlockAsync())
-                        {
-                            var chapter = CreateChapterMetadataByLine(lineChapters);
-                            await foreach (var lineChapter in intentReader.BeginAndReadBlockAsync())
-                            {
-                                if (lineChapter.StartsWith("Metadata:"))
-                                {
-                                    await foreach (var (name, value) in intentReader.BeginAndReadBlockPropertiesAsync())
-                                    {
-                                        switch (name)
-                                        {
-                                            case "title":
-                                                chapter.Title = value;
-                                                break;
-                                        }
-                                    }
-                                }
-                            }
-                            chapters.Add(chapter);
-                        }
-
-                        input.Chapters = chapters.ToArray();
-                    }
-                    else if (lineInput.StartsWith("Stream #"))
-                    {
-                        var stream = CreateStreamMetadataByLine(lineInput);
-                        await foreach (var lineStream in intentReader.BeginAndReadBlockAsync())
-                        {
-                            if (lineStream.StartsWith("Metadata:"))
-                            {
-                                await foreach (var (name, value) in intentReader.BeginAndReadBlockPropertiesAsync())
-                                {
-                                    switch (name)
-                                    {
-                                        case "title":
-                                            stream.Title = value;
-                                            break;
-                                    }
-                                }
-                            }
-                        }
-                        
-                        streams.Add(stream);
                     }
                 }
-
-                input.Streams = streams.ToArray();
-                return input;
+                
+                streams.Add(stream);
             }
         }
-        
-        throw new NotImplementedException();
+
+        input.Streams = streams.ToArray();
+        return input;
     }
 
     /// <summary>
@@ -175,7 +230,7 @@ public class Engine
     /// </summary>
     /// <param name="line">The line that start with 'Chapter #'</param>
     /// <returns>Returns the stream metadata.</returns>
-    private static ChapterMetadata CreateChapterMetadataByLine(string line)
+    private static ChapterMetadata ReadChapterMetadataByLine(string line)
     {
         var chapter = new ChapterMetadata();
 
@@ -191,6 +246,23 @@ public class Engine
         if (indexEnd < 0) return chapter;
         
         chapter.Id = ulong.Parse(line.Substring(indexStreamId + 1, indexEnd - indexStreamId - 1));
+        
+        var indexChapterStart = line.IndexOf("start", indexEnd + 1, StringComparison.Ordinal);
+        if (indexChapterStart < 0) return chapter;
+        
+        var indexChapterStartEnd = line.IndexOf(',', indexChapterStart + 1);
+        if (indexChapterStartEnd < 0) return chapter;
+        
+        var chapterStartText = line.Substring(indexChapterStart + 6, indexChapterStartEnd - indexChapterStart - 6).Trim();
+        if (double.TryParse(chapterStartText, CultureInfo.InvariantCulture, out var chapterStart))
+            chapter.Start = TimeSpan.FromSeconds(chapterStart);
+        
+        var indexChapterEnd = line.IndexOf("end", indexChapterStartEnd + 1, StringComparison.Ordinal);
+        if (indexChapterEnd < 0) return chapter;
+
+        var chapterEndText = line.Substring(indexChapterEnd + 4).Trim();
+        if (double.TryParse(chapterEndText, CultureInfo.InvariantCulture, out var chapterEnd))
+            chapter.End = TimeSpan.FromSeconds(chapterEnd);
         
         return chapter;
     }
