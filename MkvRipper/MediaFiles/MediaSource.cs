@@ -74,7 +74,7 @@ public class MediaSource
         // Returns all subtitles from the matroska file.
         var matroska = await LoadMatroskaAsync();
         if (matroska.Segment.Tracks is null) yield break;
-        foreach (var track in matroska.Segment.Tracks.TrackEntries.Where(t => t.TrackType == 17))
+        foreach (var track in matroska.Segment.Tracks.TrackEntries.Where(t => t is { TrackType: 17, CodecID: "S_HDMV/PGS" }))
         {
             yield return new ExportSupTask(this, track);
             yield return new ExportSrtTask(this, track);
