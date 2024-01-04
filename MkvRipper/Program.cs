@@ -43,7 +43,7 @@ while (true)
         var name = Console.ReadLine();
         if (string.IsNullOrEmpty(name))
             continue;
-        name = name.Trim();
+        name = FileHandler.RemoveInvalidCharsFromFilename(name).Trim();
         output.Rename(name);
         
     }
@@ -79,9 +79,7 @@ while (true)
         Console.Write("Rename all files. Enter base name (like 'Bonus %'): ");
         var baseName = Console.ReadLine();
         if (string.IsNullOrEmpty(baseName))
-        {
             continue;
-        }
 
         if (baseName.IndexOf('%') < 0)
         {
@@ -101,6 +99,7 @@ while (true)
         foreach (var output in outputs)
         {
             var name = baseName.Replace("%", counter.ToString());
+            name = FileHandler.RemoveInvalidCharsFromFilename(name).Trim();
             output.Rename(name);
             counter++;
         }
@@ -112,5 +111,3 @@ while (true)
         break;
     }
 }
-
-

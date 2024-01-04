@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace MkvRipper.Utils;
 
 public static class FileHandler
@@ -62,5 +64,20 @@ public static class FileHandler
         }
 
         return $"{size:0.00} {ext}";
+    }
+
+    /// <summary>
+    /// Removes invalid characters from the given file name.
+    /// </summary>
+    /// <param name="fileName">The original file name.</param>
+    /// <returns>Returns a save file name.</returns>
+    public static string RemoveInvalidCharsFromFilename(string fileName)
+    {
+        var builder = new StringBuilder(fileName);
+        foreach (var c in Path.GetInvalidFileNameChars())
+        {
+            builder.Replace(c, '-');
+        }
+        return builder.ToString();
     }
 }
