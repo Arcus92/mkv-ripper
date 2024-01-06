@@ -67,7 +67,7 @@ public class SubtitleFixer
         foreach (var language in allSubtitles.Select(s => s.Language).Distinct())
         {
             // Fetch all track for this language.
-            var subtitles = allSubtitles.Where(s => s.Language == language).ToList();
+            var subtitles = allSubtitles.Where(s => s.Language == language).OrderBy(s => s.TrackNumber).ToList();
             
             var extras = 0;
             for (var i = 0; i < subtitles.Count; i++)
