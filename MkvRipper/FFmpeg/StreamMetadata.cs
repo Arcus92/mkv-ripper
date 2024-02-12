@@ -27,8 +27,13 @@ public class StreamMetadata
     /// </summary>
     public string Language { get; set; } = "";
 
+    /// <summary>
+    /// Gets the format string of the stream.
+    /// </summary>
+    public string Format { get; set; } = "";
+
     public override string ToString()
     {
-        return $"Stream #{InputId}:{Id}({Language}): {Type}: {Title ?? "-/-"}";
+        return $"Stream #{InputId}:{Id}({Language}): {Type}: {Format}: {Title ?? "-/-"}";
     }
 }

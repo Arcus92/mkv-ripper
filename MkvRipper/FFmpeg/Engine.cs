@@ -285,23 +285,28 @@ public class Engine
         stream.InputId = ulong.Parse(line.Substring(indexInputId + 1, indexStreamId - indexInputId - 1));
         
         var indexLanguageStart = line.IndexOf('(', indexStreamId + 1);
-        if (indexLanguageStart < 0) return stream;
-        
-        stream.Id = ulong.Parse(line.Substring(indexStreamId + 1, indexLanguageStart - indexStreamId - 1));
-        
-        var indexLanguageEnd = line.IndexOf(')', indexLanguageStart + 1);
-        if (indexLanguageEnd < 0) return stream;
-
-        stream.Language = line.Substring(indexLanguageStart + 1, indexLanguageEnd - indexLanguageStart - 1);
-        
-        var indexType = line.IndexOf(':', indexLanguageEnd + 1);
+        var indexType = line.IndexOf(':', indexStreamId + 1);
         if (indexType < 0) return stream;
+        
+        // Language is not always available
+        if (indexLanguageStart >= 0 && indexLanguageStart < indexType)
+        {
+            stream.Id = ulong.Parse(line.Substring(indexStreamId + 1, indexLanguageStart - indexStreamId - 1));
             
+            var indexLanguageEnd = line.IndexOf(')', indexLanguageStart + 1);
+            if (indexLanguageEnd < 0) return stream;
 
-        var indexEnd = line.IndexOf(':', indexType + 1);
-        if (indexEnd < 0) return stream;
+            stream.Language = line.Substring(indexLanguageStart + 1, indexLanguageEnd - indexLanguageStart - 1);
+        }
+        else
+        {
+            stream.Id = ulong.Parse(line.Substring(indexStreamId + 1, indexType - indexStreamId - 1));
+        }
 
-        var type = line.Substring(indexType + 1, indexEnd - indexType - 1).Trim();
+        var indexFormat = line.IndexOf(':', indexType + 1);
+        if (indexFormat < 0) return stream;
+
+        var type = line.Substring(indexType + 1, indexFormat - indexType - 1).Trim();
         stream.Type = type switch
         {
             "Video" => StreamType.Video,
@@ -311,6 +316,11 @@ public class Engine
             "Attachment" => StreamType.Attachment,
             _ => throw new ArgumentException($"Unknown stream type: '{type}'")
         };
+        
+        var indexEnd = line.IndexOf(',', indexFormat + 1);
+        if (indexEnd < 0) indexEnd = line.Length;
+        
+        stream.Format = line.Substring(indexFormat + 1, indexEnd - indexFormat - 1).Trim();
         
         return stream;
     }
