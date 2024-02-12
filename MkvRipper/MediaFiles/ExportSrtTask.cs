@@ -1,47 +1,54 @@
-using Matroska.Models;
-using MkvRipper.Subtitles.PGS;
-using MkvRipper.Subtitles.PGS.Exporter;
+using MkvRipper.FFmpeg;
 using MkvRipper.Utils;
 
 namespace MkvRipper.MediaFiles;
 
 public class ExportSrtTask : IExportMediaTask
 {
-    public ExportSrtTask(MediaSource source, TrackEntry track)
+    public ExportSrtTask(MediaSource source, int streamIndex, string language)
     {
         Source = source;
-        Track = track;
+        StreamIndex = streamIndex;
+        Language = language;
     }
-    
+
     /// <summary>
     /// Gets the source media file.
     /// </summary>
     public MediaSource Source { get; }
+    
+    /// <summary>
+    /// Gets the language.
+    /// </summary>
+    public string Language { get; }
 
     /// <summary>
-    /// Gets the subtitle track.
+    /// Gets the track id.
     /// </summary>
-    public TrackEntry Track { get; }
-    
+    public int StreamIndex { get; }
+
     /// <inheritdoc />
     public string GetPath(MediaOutput output)
     {
-        return output.GetPath($".{Track.TrackNumber}.{Track.Language}.srt");
+        return output.GetPath($".{StreamIndex}.{Language}.srt");
     }
-    
+
     /// <inheritdoc />
     public async Task ExportAsync(MediaOutput output)
     {
-        if (Track.Language is "zho")
-            return;
-        
         var fileName = GetPath(output);
-
-        var matroska = await Source.LoadMatroskaAsync();
-        var pgs = new MatroskaPresentationGraphicStream(matroska, Track.TrackNumber);
+        
+        var ffmpeg = new Engine();
         await FileHandler.HandleAsync(fileName, async path =>
         {
-            await pgs.WriteToSrtFileAsync(path, Track.Language);
+            await ffmpeg.ConvertAsync(b =>
+            {
+                var input = b.Input(Source.FileName);
+                b.Map(input, StreamType.Subtitle, StreamIndex);
+                b.Format("srt");
+                b.OverwriteOutput(false);
+                b.Output(path);
+            });
         });
     }
 }
