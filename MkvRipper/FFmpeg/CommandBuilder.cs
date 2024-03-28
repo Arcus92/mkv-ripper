@@ -191,6 +191,16 @@ public class CommandBuilder
     }
     
     /// <summary>
+    /// Sets the filter to use for the given stream types.
+    /// </summary>
+    /// <param name="streamType">The stream type to set the filter.</param>
+    /// <param name="filter">The filter definition.</param>
+    public void Filter(StreamType streamType, string filter)
+    {
+        _arguments.Append($"-filter:{streamType.Identifier()} \"{filter}\" ");
+    }
+    
+    /// <summary>
     /// Defines the output path. Must be the last argument.
     /// </summary>
     /// <param name="path">The file path.</param>
