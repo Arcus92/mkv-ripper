@@ -151,6 +151,15 @@ public class CommandBuilder
     {
         _arguments.Append($"-map_chapters {inputId} ");
     }
+    
+    /// <summary>
+    /// Maps the metadata from the given input stream.
+    /// </summary>
+    /// <param name="inputId">The id of the input file.</param>
+    public void MapMetadata(int inputId)
+    {
+        _arguments.Append($"-map_metadata {inputId} ");
+    }
 
     /// <summary>
     /// Seeks to the given timestamp.
