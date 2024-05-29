@@ -36,7 +36,6 @@ public class ExportMp4Task : IExportMediaTask
                 b.MaxRate(20000);
                 b.BufferSize(25000);
                 b.MapChapters(input);
-                b.MapMetadata(-1);
                 b.Map(input, StreamType.Video);
                 b.Map(input, StreamType.Audio);
                 b.Codec(StreamType.Video, "libx264");
