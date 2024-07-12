@@ -13,15 +13,20 @@ public struct ConverterUpdate
     /// <summary>
     /// Gets the duration of the input stream.
     /// </summary>
-    public TimeSpan Duration { get; set; }
+    public TimeSpan? Duration { get; set; }
 
     /// <summary>
     /// Gets the current frame position of the converter.
     /// </summary>
-    public TimeSpan Current { get; set; }
+    public TimeSpan? Current { get; set; }
+
+    /// <summary>
+    /// Gets the current frame of the converter.
+    /// </summary>
+    public long? Frame { get; set; }
 
     /// <summary>
     /// Gets the percentage of the converter.
     /// </summary>
-    public double Percentage { get; set; }
+    public double? Percentage { get; set; }
 }

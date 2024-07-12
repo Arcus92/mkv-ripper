@@ -66,25 +66,42 @@ public class Engine
             {
                 // No need to check frame updates
                 if (onUpdate is null) continue;
-                
-                var frameStart = lineRoot.IndexOf("time=", StringComparison.Ordinal);
-                if (frameStart < 0) continue;
-                frameStart += 5;
-                var frameEnd = lineRoot.IndexOf("bitrate=", frameStart, StringComparison.Ordinal);
-                if (frameEnd < 0) continue;
-                var timeText = lineRoot.Substring(frameStart, frameEnd - frameStart).Trim();
-                if (!TimeSpan.TryParse(timeText, out var currentTime)) continue;
 
-                // We need one input to determined the total duration. 
-                // Currently this won't handle offsets or lengths.
+                var frameStart = 6;
+                
+                var frameEnd = lineRoot.IndexOf("fps=", frameStart, StringComparison.Ordinal);
+                if (frameEnd < 0) continue;
+                var frameText = lineRoot.Substring(frameStart, frameEnd - frameStart).Trim();
+                long? frame = null;
+                if (long.TryParse(frameText, out var value))
+                {
+                    frame = value;
+                }
+                
+                var timeStart = lineRoot.IndexOf("time=", frameEnd, StringComparison.Ordinal);
+                if (timeStart < 0) continue;
+                timeStart += 5;
+                
+                var timeEnd = lineRoot.IndexOf("bitrate=", timeStart, StringComparison.Ordinal);
+                if (timeEnd < 0) continue;
+                var timeText = lineRoot.Substring(timeStart, timeEnd - timeStart).Trim();
+                TimeSpan? currentTime = null;
+                if (TimeSpan.TryParse(timeText, out var time))
+                {
+                    currentTime = time;
+                }
+
+                // We need one input to determine the total duration. 
+                // Currently, this won't handle offsets or lengths.
                 if (inputs.Count <= 0) continue;
                 var duration = inputs[0].Duration;
-                var percentage = currentTime.TotalSeconds / duration.TotalSeconds;
+                var percentage = currentTime?.TotalSeconds / duration.TotalSeconds;
                 var update = new ConverterUpdate()
                 {
                     Inputs = inputs,
                     Duration = duration,
                     Current = currentTime,
+                    Frame = frame,
                     Percentage = percentage
                 };
 

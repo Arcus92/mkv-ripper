@@ -44,7 +44,7 @@ public class ExportMp4Task : IExportMediaTask
                 b.Output(path);
             }, onUpdate: (update) =>
             {
-                Console.WriteLine($"[{Math.Floor(update.Percentage * 100):0}%] {update.Current:hh\\:mm\\:ss} / {update.Duration:hh\\:mm\\:ss}");
+                Console.WriteLine(update.GetProgressText());
             });
         });
     }
