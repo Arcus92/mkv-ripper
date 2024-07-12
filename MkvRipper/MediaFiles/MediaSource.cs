@@ -67,7 +67,7 @@ public class MediaSource
     /// Returns all export tasks for this media file.
     /// </summary>
     /// <returns></returns>
-    public async IAsyncEnumerable<IExportMediaTask> GetExportTasksAsync()
+    public async IAsyncEnumerable<IExportMediaTask> GetExportMp4TasksAsync()
     {
         // Returns the video.
         yield return new ExportMp4Task(this);
@@ -95,6 +95,16 @@ public class MediaSource
 
             subIndex++;
         }
+    }
+
+    /// <summary>
+    /// Returns all export tasks for this media file.
+    /// </summary>
+    /// <returns></returns>
+    public async IAsyncEnumerable<IExportMediaTask> GetExportMkvTasksAsync()
+    {
+        // Returns the video.
+        yield return new ExportMkvTask(this);
     }
 
     /// <summary>

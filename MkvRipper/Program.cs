@@ -55,7 +55,7 @@ while (true)
         {
             var output = new MediaOutput(mediaOutputDirectory, source.BaseName);
             var tasks = new List<Task>();
-            await foreach (var export in source.GetExportTasksAsync())
+            await foreach (var export in source.GetExportMp4TasksAsync())
             {
                 if (export.Exists(output)) continue;
                 tasks.Add(export.ExportAsync(output));
