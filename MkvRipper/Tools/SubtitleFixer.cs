@@ -7,7 +7,7 @@ namespace MkvRipper.Tools;
 /// </summary>
 public class SubtitleFixer
 {
-    private record SubtitleFile(string Path, string Language, int TrackNumber);
+    private record SubtitleFile(string Path, string Language, int TrackNumber, long FileSize);
 
     private const bool ForcedSubtitleRule = false;
 
@@ -30,20 +30,21 @@ public class SubtitleFixer
     /// <param name="output">The video output.</param>
     private void AutoRenameSubtitle(MediaOutput output)
     {
-        AutoRenameSubtitle(output, ".sup");
-        AutoRenameSubtitle(output, ".srt");
+        AutoRenameSubtitle(output, ".srt", ".sup");
     }
     
     /// <summary>
     /// Rename the subtitle tracks and try to guess the forced subtitles by naming conventions.
     /// </summary>
     /// <param name="output">The video output.</param>
-    /// <param name="extension">The subtitle extension.</param>
-    private void AutoRenameSubtitle(MediaOutput output, string extension)
+    /// <param name="extensions">The subtitle extensions.</param>
+    private void AutoRenameSubtitle(MediaOutput output, params string[] extensions)
     {
+        var mainExtension = extensions.First();
+        
         // Collect all subtitles and extract the language and track number.
         var allSubtitles = new List<SubtitleFile>();
-        foreach (var file in output.EnumerateFiles(extension).Order())
+        foreach (var file in output.EnumerateFiles(mainExtension).Order())
         {
             var indexExt = file.LastIndexOf('.');
             if (indexExt < 0) continue;
@@ -56,7 +57,10 @@ public class SubtitleFixer
             var trackName = file.Substring(indexTrack + 1, indexLang - indexTrack - 1);
             if (!int.TryParse(trackName, out var trackNumber)) continue;
 
-            allSubtitles.Add(new SubtitleFile(file,  language, trackNumber));
+            var fileInfo = new FileInfo(file);
+            var fileSize = fileInfo.Length;
+
+            allSubtitles.Add(new SubtitleFile(file,  language, trackNumber, fileSize));
         }
 
         
@@ -68,33 +72,58 @@ public class SubtitleFixer
         {
             // Fetch all track for this language.
             var subtitles = allSubtitles.Where(s => s.Language == language).OrderBy(s => s.TrackNumber).ToList();
-            
-            var extras = 0;
-            for (var i = 0; i < subtitles.Count; i++)
-            {
-                var subtitle = subtitles[i];
-                string newExtension;
 
-                // First one is always the main track
-                if (i == 0)
+            const long limit = 1024 * 10;
+            var findOver = false;
+            var findUnder = false;
+            foreach (var subtitle in subtitles)
+            {
+                if (subtitle.FileSize > limit)
+                    findOver = true;
+                else
                 {
-                    newExtension = $".{language}{extension}";
+                    if (findUnder)
+                    {
+                        findUnder = false;
+                        break;
+                    }
+                    findUnder = true;
+                }
+            }
+
+            var detectForced = findOver && findUnder;
+
+            var index = 0;
+            var extras = 0;
+            foreach (var subtitle in subtitles)
+            {
+                string newName;
+
+                if (detectForced && subtitle.FileSize <= limit)
+                {
+                    newName = $".{language}.forced";
+                    detectForced = false;
+                }
+                // First one is always the main track
+                else if (index == 0)
+                {
+                    newName = $".{language}";
+                    index++;
                 }
                 else
                 {
-                    var prev = subtitles[i - 1];
-                    if (i == 1 && (prev.TrackNumber == subtitle.TrackNumber - 1 || !ForcedSubtitleRule))
-                    {
-                        newExtension = $".{language}.forced{extension}";
-                    }
-                    else
-                    {
-                        newExtension = $".{language}.extra{++extras}{extension}";
-                    }
+                    newName = $".{language}.extra{++extras}";
+                    index++;
                 }
 
-                var newFileName = Path.Combine(output.Directory.Path, $"{output.BaseName}{newExtension}");
-                File.Move(subtitle.Path, newFileName);
+                var baseFileName = Path.GetFileNameWithoutExtension(subtitle.Path);
+                foreach (var extension in extensions)
+                {
+                    var oldFileName = Path.Combine(output.Directory.Path, $"{baseFileName}{extension}");
+                    var newFileName = Path.Combine(output.Directory.Path, $"{output.BaseName}{newName}{extension}");
+                    if (!File.Exists(oldFileName)) continue;
+                    File.Move(oldFileName, newFileName);
+                }
             }
         }
     }
