@@ -208,6 +208,24 @@ public class CommandBuilder
     {
         _arguments.Append($"-filter:{streamType.Identifier()} \"{filter}\" ");
     }
+
+    /// <summary>
+    /// Sets the analysis duration for the following input.
+    /// </summary>
+    /// <param name="value">The analysis duration.</param>
+    public void AnalyzeDuration(long value)
+    {
+        _arguments.Append($"-analyzeduration {value} ");
+    }
+    
+    /// <summary>
+    /// Sets the probe size for the following input.
+    /// </summary>
+    /// <param name="value">The probe size.</param>
+    public void ProbeSize(long value)
+    {
+        _arguments.Append($"-probesize {value} ");
+    }
     
     /// <summary>
     /// Defines the output path. Must be the last argument.
