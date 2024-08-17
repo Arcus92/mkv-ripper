@@ -7,10 +7,11 @@ namespace MkvRipper.MediaFiles;
 
 public class ExportSrtFromSupTask : IExportMediaTask
 {
-    public ExportSrtFromSupTask(MediaSource source, TrackEntry track)
+    public ExportSrtFromSupTask(MediaSource source, TrackEntry track, string language)
     {
         Source = source;
         Track = track;
+        Language = language;
     }
     
     /// <summary>
@@ -23,10 +24,15 @@ public class ExportSrtFromSupTask : IExportMediaTask
     /// </summary>
     public TrackEntry Track { get; }
     
+    /// <summary>
+    /// Gets the subtitle language.
+    /// </summary>
+    public string Language { get; }
+    
     /// <inheritdoc />
     public string GetPath(MediaOutput output)
     {
-        return output.GetPath($".{Track.TrackNumber}.{Track.Language}.srt");
+        return output.GetPath($".{Track.TrackNumber}.{Language}.srt");
     }
     
     /// <inheritdoc />
@@ -41,7 +47,7 @@ public class ExportSrtFromSupTask : IExportMediaTask
         var pgs = new MatroskaPresentationGraphicStream(matroska, Track.TrackNumber);
         await FileHandler.HandleAsync(fileName, async path =>
         {
-            await pgs.WriteToSrtFileAsync(path, Track.Language);
+            await pgs.WriteToSrtFileAsync(path, Language);
         });
     }
 }

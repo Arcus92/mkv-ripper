@@ -7,10 +7,11 @@ namespace MkvRipper.MediaFiles;
 
 public class ExportSupTask : IExportMediaTask
 {
-    public ExportSupTask(MediaSource source, TrackEntry track)
+    public ExportSupTask(MediaSource source, TrackEntry track, string langauge)
     {
         Source = source;
         Track = track;
+        Language = langauge;
     }
     
     /// <summary>
@@ -22,11 +23,16 @@ public class ExportSupTask : IExportMediaTask
     /// Gets the subtitle track.
     /// </summary>
     public TrackEntry Track { get; }
-    
+
+    /// <summary>
+    /// Gets the subtitle language.
+    /// </summary>
+    public string Language { get; }
+
     /// <inheritdoc />
     public string GetPath(MediaOutput output)
     {
-        return output.GetPath($".{Track.TrackNumber}.{Track.Language}.sup");
+        return output.GetPath($".{Track.TrackNumber}.{Language}.sup");
     }
     
     /// <inheritdoc />

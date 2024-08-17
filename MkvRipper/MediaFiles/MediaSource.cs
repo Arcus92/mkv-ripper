@@ -1,6 +1,7 @@
 using Matroska;
 using Matroska.Models;
 using MkvRipper.FFmpeg;
+using MkvRipper.Subtitles;
 
 namespace MkvRipper.MediaFiles;
 
@@ -77,8 +78,10 @@ public class MediaSource
         if (matroska.Segment.Tracks is null) yield break;
         foreach (var track in matroska.Segment.Tracks.TrackEntries.Where(t => t is { TrackType: 17, CodecID: "S_HDMV/PGS" }))
         {
-            yield return new ExportSupTask(this, track);
-            yield return new ExportSrtFromSupTask(this, track);
+            var language = Subtitle.MapSubtitleLanguages(track.Language);
+            
+            yield return new ExportSupTask(this, track, language);
+            yield return new ExportSrtFromSupTask(this, track, language);
         }
         
         // Find srt subtitle in the matroska file using ffmpeg. It already has an exporter.
@@ -91,7 +94,11 @@ public class MediaSource
             // Somehow it uses a different index logic as input.
             
             if (stream.Format.StartsWith("subrip"))
-                yield return new ExportSrtTask(this, subIndex, stream.Language);
+            {
+                var language = Subtitle.MapSubtitleLanguages(stream.Language);
+                
+                yield return new ExportSrtTask(this, subIndex, language);
+            }
 
             subIndex++;
         }
