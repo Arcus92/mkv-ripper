@@ -16,7 +16,7 @@ public static class Pgs2Text
     private struct ActiveCompositionObject
     {
         public DisplaySet DisplaySet { get; set; }
-        public ObjectDefinitionSegment CompositionObject { get; set; }
+        public WindowDefinitionSegment.WindowDefinition Window { get; set; }
         public string Text { get; set; }
         public TimeSpan Start { get; set; }
     }
@@ -32,10 +32,37 @@ public static class Pgs2Text
         var activeCompositionObjects = new List<ActiveCompositionObject>();
         using var tesseract = await TesseractManager.Shared.GetEngineAsync(language);
         
+        var ctxObjects = new List<ObjectDefinitionSegment>();
+        var ctxPalettes = new Dictionary<ushort, PaletteDefinitionSegment>();
+        var ctxWindows = new Dictionary<ushort, WindowDefinitionSegment.WindowDefinition>();
+        
         await foreach (var displaySet in pgs.ReadAndCleanUpAsync())
         {
             var time = TimeSpan.FromMilliseconds(displaySet.PresentationTimestamp / 90.0);
 
+            // Frees all previous segments
+            if (displaySet.PresentationComposition.CompositionState != 0)
+            {
+                ctxObjects.Clear();
+                ctxPalettes.Clear();
+                ctxWindows.Clear();
+            }
+
+            // Collect all the active segments
+            foreach (var ods in displaySet.ObjectDefinitions)
+            {
+                ctxObjects.Add(ods);
+            }
+            foreach (var pds in displaySet.PaletteDefinitions)
+            {
+                ctxPalettes[pds.Id] = pds;
+            }
+            foreach (var wds in displaySet.WindowDefinitions.SelectMany(w => w.Windows))
+            {
+                ctxWindows[wds.Id] = wds;
+            }
+            
+            
             // TODO: Handle different windows and cropping.
             if (activeCompositionObjects.Count == 1)
             {
@@ -51,7 +78,7 @@ public static class Pgs2Text
             else if (activeCompositionObjects.Count > 1)
             {
                 // There are two windows on screen. We'll just add the text together.
-                // In future we could try to detect the window position and try to get the order right, but not for now.
+                // In the future, we could try to detect the window position and try to get the order right, but not for now.
                 var first = activeCompositionObjects[0];
                 var stringBuilder = new StringBuilder();
                 foreach (var active in activeCompositionObjects)
@@ -67,11 +94,19 @@ public static class Pgs2Text
                 };
             }
             
-            
             activeCompositionObjects.Clear();
-            foreach (var compositionObject in displaySet.ObjectDefinitions.Where(o => o.IsFirstInSequence))
+            
+            // Load the palette
+            if (!ctxPalettes.TryGetValue(displaySet.PresentationComposition.PaletteId, out var palette))
+                continue;
+
+            foreach (var compositionObject in displaySet.PresentationComposition.CompositionObjects)
             {
-                using var pix = displaySet.ToPix(compositionObject.Id);
+                // Load the window
+                if (!ctxWindows.TryGetValue(compositionObject.WindowId, out var window))
+                    continue;
+                
+                using var pix = ToPix(ctxObjects.Where(ods => ods.Id == compositionObject.Id), palette);
                 if (pix is null) continue;
             
                 using var page = tesseract.Process(pix);
@@ -82,7 +117,7 @@ public static class Pgs2Text
                 activeCompositionObjects.Add(new ActiveCompositionObject()
                 {
                     DisplaySet = displaySet,
-                    CompositionObject = compositionObject,
+                    Window = window,
                     Text = text,
                     Start = time
                 });
@@ -91,18 +126,18 @@ public static class Pgs2Text
     }
     
     /// <summary>
-    /// Converts the current display set to a picture for text recognition.
+    /// Converts a composition to a picture for text recognition.
     /// </summary>
-    /// <param name="displaySet">The display set.</param>
-    /// <param name="objectCompositionId">The id of the composition.</param>
+    /// <param name="objectDefinitionSegments">The active objects for this composition with the same id.</param>
+    /// <param name="palette">The palette for the pixel data.</param>
     /// <returns></returns>
-    public static Pix? ToPix(this DisplaySet displaySet, ushort objectCompositionId)
+    private static Pix? ToPix(IEnumerable<ObjectDefinitionSegment> objectDefinitionSegments, 
+        PaletteDefinitionSegment palette)
     {
         ushort width = 0;
         ushort height = 0;
         var data = new List<byte>();
-        foreach (var ods in displaySet.ObjectDefinitions
-                     .Where(o => o.Id == objectCompositionId))
+        foreach (var ods in objectDefinitionSegments)
         {
             if (ods.IsFirstInSequence)
             {
@@ -119,10 +154,7 @@ public static class Pgs2Text
         
         var pix = Pix.Create(width, height, 32);
         var pixData = pix.GetData();
-
-        var paletteId = displaySet.PresentationComposition.PaletteId;
-        if (!displaySet.PaletteDefinitions.TryFirst(p => p.Id == paletteId, out var palette))
-            return null;
+        
         RunLengthEncoding.Encode(data.ToArray(), (pixData, palette), WriteColorToPix);
         return pix;
     }
