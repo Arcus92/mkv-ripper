@@ -91,6 +91,15 @@ public class CommandBuilder
     }
 
     /// <summary>
+    /// Sets the codec to use for all streams.
+    /// </summary>
+    /// <param name="codec">The codec to use.</param>
+    public void Codec(string codec)
+    {
+        _arguments.Append($"-c {codec} ");
+    }
+    
+    /// <summary>
     /// Sets the codec to use for the given stream types.
     /// </summary>
     /// <param name="streamType">The stream type to set the codec.</param>
