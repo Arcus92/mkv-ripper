@@ -5,13 +5,13 @@ using MkvRipper.Utils;
 
 namespace MkvRipper.MediaFiles;
 
-public class ExportSupTask : IExportMediaTask
+public class ExportSrtFromMkvTask : IExportMediaTask
 {
-    public ExportSupTask(MediaSource source, TrackEntry track, string langauge)
+    public ExportSrtFromMkvTask(MediaSource source, TrackEntry track, string language)
     {
         Source = source;
         Track = track;
-        Language = langauge;
+        Language = language;
     }
     
     /// <summary>
@@ -23,28 +23,31 @@ public class ExportSupTask : IExportMediaTask
     /// Gets the subtitle track.
     /// </summary>
     public TrackEntry Track { get; }
-
+    
     /// <summary>
     /// Gets the subtitle language.
     /// </summary>
     public string Language { get; }
-
+    
     /// <inheritdoc />
     public string GetPath(MediaOutput output)
     {
-        return output.GetPath($".{Track.TrackNumber}.{Language}.sup");
+        return output.GetPath($".{Track.TrackNumber}.{Language}.srt");
     }
     
     /// <inheritdoc />
     public async Task ExportAsync(MediaOutput output)
     {
+        if (Track.Language is "zho")
+            return;
+        
         var fileName = GetPath(output);
 
         var matroska = await Source.LoadMatroskaAsync();
         var pgs = new MatroskaPresentationGraphicStream(matroska, Track.TrackNumber);
         await FileHandler.HandleAsync(fileName, async path =>
         {
-            await pgs.WriteToSupFileAsync(path);
+            await pgs.WriteToSrtFileAsync(path, Language);
         });
     }
 }

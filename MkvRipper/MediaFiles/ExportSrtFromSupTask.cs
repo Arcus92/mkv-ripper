@@ -7,47 +7,35 @@ namespace MkvRipper.MediaFiles;
 
 public class ExportSrtFromSupTask : IExportMediaTask
 {
-    public ExportSrtFromSupTask(MediaSource source, TrackEntry track, string language)
+    public ExportSrtFromSupTask(ExportSubtitleFromVideoTask parent)
     {
-        Source = source;
-        Track = track;
-        Language = language;
+        ParentTask = parent;
     }
-    
-    /// <summary>
-    /// Gets the source media file.
-    /// </summary>
-    public MediaSource Source { get; }
 
-    /// <summary>
-    /// Gets the subtitle track.
-    /// </summary>
-    public TrackEntry Track { get; }
-    
-    /// <summary>
-    /// Gets the subtitle language.
-    /// </summary>
-    public string Language { get; }
+    public ExportSubtitleFromVideoTask ParentTask { get; }
     
     /// <inheritdoc />
     public string GetPath(MediaOutput output)
     {
-        return output.GetPath($".{Track.TrackNumber}.{Language}.srt");
+        return output.GetPath($".{ParentTask.StreamIndex}.{ParentTask.Language}.srt");
     }
     
     /// <inheritdoc />
     public async Task ExportAsync(MediaOutput output)
     {
-        if (Track.Language is "zho")
-            return;
-        
         var fileName = GetPath(output);
+        var pgsFileName = ParentTask.GetPath(output);
 
-        var matroska = await Source.LoadMatroskaAsync();
-        var pgs = new MatroskaPresentationGraphicStream(matroska, Track.TrackNumber);
+        // If the input file doesn't exist, we need to wait for the parent task to finish to create the PGS file.
+        if (!File.Exists(pgsFileName))
+        {
+            await ParentTask.WaitAsync();
+        }
+        
+        var pgs = new SupFilePresentationGraphicStream(pgsFileName);
         await FileHandler.HandleAsync(fileName, async path =>
         {
-            await pgs.WriteToSrtFileAsync(path, Language);
+            await pgs.WriteToSrtFileAsync(path, ParentTask.Language);
         });
     }
 }

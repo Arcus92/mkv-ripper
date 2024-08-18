@@ -73,31 +73,28 @@ public class MediaSource
         // Returns the video.
         yield return new ExportMp4Task(this);
         
-        // Returns all subtitles from the matroska file.
-        var matroska = await LoadMatroskaAsync();
-        if (matroska.Segment.Tracks is null) yield break;
-        foreach (var track in matroska.Segment.Tracks.TrackEntries.Where(t => t is { TrackType: 17, CodecID: "S_HDMV/PGS" }))
-        {
-            var language = Subtitle.MapSubtitleLanguages(track.Language);
-            
-            yield return new ExportSupTask(this, track, language);
-            yield return new ExportSrtFromSupTask(this, track, language);
-        }
-        
-        // Find srt subtitle in the matroska file using ffmpeg. It already has an exporter.
+        // Find srt subtitle in the video file using ffmpeg. It already has an exporter.
         var ffmpeg = new Engine();
         var metadata = await ffmpeg.GetMetadataAsync(FileName);
+        
+        // I don't know why I cannot use stream.Id that is returned by FFmpeg.
+        // Somehow it uses a different index logic as input.
         var subIndex = 0; 
         foreach (var stream in metadata.Streams.Where(s => s.Type == StreamType.Subtitle))
         {
-            // I don't know why I cannot use stream.Id that is returned by FFmpeg.
-            // Somehow it uses a different index logic as input.
+            var language = Subtitle.MapSubtitleLanguages(stream.Language);
             
             if (stream.Format.StartsWith("subrip"))
             {
-                var language = Subtitle.MapSubtitleLanguages(stream.Language);
+                yield return ExportSubtitleFromVideoTask.Srt(this, subIndex, language);
+            }
+            else if (stream.Format.StartsWith("hdmv_pgs_subtitle"))
+            {
+                var pgs = ExportSubtitleFromVideoTask.Pgs(this, subIndex, language);
+                var srt = new ExportSrtFromSupTask(pgs);
                 
-                yield return new ExportSrtTask(this, subIndex, language);
+                yield return pgs;
+                yield return srt;
             }
 
             subIndex++;
