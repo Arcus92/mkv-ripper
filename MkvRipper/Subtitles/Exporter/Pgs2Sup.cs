@@ -1,6 +1,7 @@
-using MkvRipper.Utils;
+using MkvRipper.Subtitles.PGS;
+using MkvRipper.Subtitles.Utils;
 
-namespace MkvRipper.Subtitles.PGS.Exporter;
+namespace MkvRipper.Subtitles.Exporter;
 
 /// <summary>
 /// Extension methods to converts a PGS to a a .sup file.

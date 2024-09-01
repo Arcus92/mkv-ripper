@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <Reference Include="Matroska">
+        <HintPath>..\..\..\.nuget\packages\matroska\0.0.11-preview-01\lib\netstandard2.0\Matroska.dll</HintPath>
+      </Reference>
+      <Reference Include="Tesseract">
+        <HintPath>..\..\..\.nuget\packages\tesseract\5.2.0\lib\netstandard2.0\Tesseract.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\MkvRipper.Utils\MkvRipper.Utils.csproj" />
+    </ItemGroup>
+
+</Project>

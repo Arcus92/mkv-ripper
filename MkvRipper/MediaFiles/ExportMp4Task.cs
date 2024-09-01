@@ -1,4 +1,5 @@
 using MkvRipper.FFmpeg;
+using MkvRipper.FFmpeg.Utils;
 using MkvRipper.Utils;
 
 namespace MkvRipper.MediaFiles;

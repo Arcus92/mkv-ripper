@@ -1,4 +1,5 @@
 ﻿using MkvRipper.FFmpeg;
+using MkvRipper.FFmpeg.Utils;
 using MkvRipper.MediaFiles;
 using MkvRipper.Tools;
 using MkvRipper.Utils;
@@ -38,7 +39,9 @@ while (true)
             await foreach (var export in source.GetExportMp4TasksAsync())
             {
                 if (export.Exists(output)) continue;
-                tasks.Add(export.ExportAsync(output));
+                var task = export.ExportAsync(output);
+                //await task;
+                tasks.Add(task);
             }
 
             await Task.WhenAll(tasks);
@@ -54,7 +57,7 @@ while (true)
             var entry = outputs[i];
             Console.WriteLine($"[{i + 1}] {entry.BaseName} ({entry.FileCount} file(s) - {FileHandler.FileSizeToText(entry.FileSize)})");
         }
-        Console.Write("<all> Batch rename all files");
+        Console.WriteLine("<all> Batch rename all files");
         Console.Write("Select the output to rename: ");
         input = Console.ReadLine();
         if (input is null) continue;
@@ -199,7 +202,7 @@ while (true)
                     b.Seek(start);
                     b.Duration(end - start);
                     
-                    b.OverwriteOutput(true);
+                    b.OverwriteOutput();
                     b.Output(path);
                 }, onUpdate: (update) =>
                 {

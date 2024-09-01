@@ -1,6 +1,7 @@
+using MkvRipper.Utils;
 using Tesseract;
 
-namespace MkvRipper.Utils;
+namespace MkvRipper.Subtitles.Utils;
 
 public class TesseractManager
 {

@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 
-namespace MkvRipper.Utils;
+namespace MkvRipper.FFmpeg.Utils;
 
 /// <summary>
 /// A helper class to read text files line by line with intent syntax.

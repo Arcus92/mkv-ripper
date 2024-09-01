@@ -2,6 +2,12 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MkvRipper", "MkvRipper\MkvRipper.csproj", "{7B9A01E2-3FA4-498A-89CE-CCAECBA2F6E7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MkvRipper.FFmpeg", "MkvRipper.FFmpeg\MkvRipper.FFmpeg.csproj", "{72C8D4A5-8AF4-4153-82E6-873E3095806F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MkvRipper.Subtitles", "MkvRipper.Subtitles\MkvRipper.Subtitles.csproj", "{49B54483-A38D-4C10-9B36-D24691F0BA79}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MkvRipper.Utils", "MkvRipper.Utils\MkvRipper.Utils.csproj", "{D095777B-B868-451D-A537-AFA61C3F90AF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +18,17 @@ Global
 		{7B9A01E2-3FA4-498A-89CE-CCAECBA2F6E7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7B9A01E2-3FA4-498A-89CE-CCAECBA2F6E7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7B9A01E2-3FA4-498A-89CE-CCAECBA2F6E7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{72C8D4A5-8AF4-4153-82E6-873E3095806F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{72C8D4A5-8AF4-4153-82E6-873E3095806F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{72C8D4A5-8AF4-4153-82E6-873E3095806F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{72C8D4A5-8AF4-4153-82E6-873E3095806F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{49B54483-A38D-4C10-9B36-D24691F0BA79}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{49B54483-A38D-4C10-9B36-D24691F0BA79}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{49B54483-A38D-4C10-9B36-D24691F0BA79}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{49B54483-A38D-4C10-9B36-D24691F0BA79}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D095777B-B868-451D-A537-AFA61C3F90AF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D095777B-B868-451D-A537-AFA61C3F90AF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D095777B-B868-451D-A537-AFA61C3F90AF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D095777B-B868-451D-A537-AFA61C3F90AF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

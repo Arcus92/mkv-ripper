@@ -1,5 +1,5 @@
 using MkvRipper.Subtitles.PGS.Segments;
-using MkvRipper.Utils;
+using MkvRipper.Subtitles.Utils;
 
 namespace MkvRipper.Subtitles.PGS;
 

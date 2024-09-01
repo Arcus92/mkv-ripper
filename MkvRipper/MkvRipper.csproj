@@ -15,6 +15,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Folder Include="Utils\" />
       <Folder Include="x64\" />
     </ItemGroup>
 
@@ -64,6 +65,12 @@
       <None Update="tessdata\rus.traineddata">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\MkvRipper.FFmpeg\MkvRipper.FFmpeg.csproj" />
+      <ProjectReference Include="..\MkvRipper.Subtitles\MkvRipper.Subtitles.csproj" />
+      <ProjectReference Include="..\MkvRipper.Utils\MkvRipper.Utils.csproj" />
     </ItemGroup>
 
 </Project>

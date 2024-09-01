@@ -1,9 +1,11 @@
 using System.Text;
+using MkvRipper.Subtitles.PGS;
 using MkvRipper.Subtitles.PGS.Segments;
+using MkvRipper.Subtitles.Utils;
 using MkvRipper.Utils;
 using Tesseract;
 
-namespace MkvRipper.Subtitles.PGS.Exporter;
+namespace MkvRipper.Subtitles.Exporter;
 
 /// <summary>
 /// Extension methods to extract the text of a PGS using OCR.

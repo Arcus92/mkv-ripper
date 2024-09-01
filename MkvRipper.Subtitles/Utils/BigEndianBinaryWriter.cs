@@ -1,4 +1,4 @@
-namespace MkvRipper.Utils;
+namespace MkvRipper.Subtitles.Utils;
 
 /// <summary>
 /// A variant of the <see cref="BinaryWriter"/> but in big-endian.

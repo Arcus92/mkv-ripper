@@ -1,6 +1,7 @@
 using System.Text;
+using MkvRipper.Subtitles.PGS;
 
-namespace MkvRipper.Subtitles.PGS.Exporter;
+namespace MkvRipper.Subtitles.Exporter;
 
 /// <summary>
 /// Extension methods to converts a PGS to a a text-based .str file.

@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using System.Globalization;
-using MkvRipper.Utils;
+using MkvRipper.FFmpeg.Utils;
 
 namespace MkvRipper.FFmpeg;
 

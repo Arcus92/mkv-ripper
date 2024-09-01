@@ -1,5 +1,5 @@
 using Matroska.Models;
-using MkvRipper.Utils;
+using MkvRipper.Subtitles.Utils;
 
 namespace MkvRipper.Subtitles.PGS;
 

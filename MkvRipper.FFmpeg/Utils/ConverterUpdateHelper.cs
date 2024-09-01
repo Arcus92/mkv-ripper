@@ -1,6 +1,4 @@
-using MkvRipper.FFmpeg;
-
-namespace MkvRipper.Utils;
+namespace MkvRipper.FFmpeg.Utils;
 
 /// <summary>
 /// Helper class for <see cref="ConverterUpdate"/>.
