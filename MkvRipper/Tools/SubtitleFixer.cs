@@ -9,8 +9,6 @@ public class SubtitleFixer
 {
     private record SubtitleFile(string Path, string Language, int TrackNumber, long FileSize);
 
-    private const bool ForcedSubtitleRule = false;
-
     /// <summary>
     /// Tries to fix the subtitles in the output directory.
     /// </summary>
