@@ -32,8 +32,11 @@ while (true)
     // Convert
     if (input.Equals("c", StringComparison.OrdinalIgnoreCase))
     {
+        var total = sources.Count;
+        var index = 0;
         foreach (var source in sources)
         {
+            index++;
             var output = new MediaOutput(mediaOutputDirectory, source.BaseName);
             var tasks = new List<Task>();
             await foreach (var export in source.GetExportMp4TasksAsync())
@@ -44,6 +47,10 @@ while (true)
                 tasks.Add(task);
             }
 
+            if (tasks.Count == 0)
+                continue;
+            
+            Console.WriteLine($"---- [{index}/{total}] {source.BaseName} ----");
             await Task.WhenAll(tasks);
             source.Unload();
         }
