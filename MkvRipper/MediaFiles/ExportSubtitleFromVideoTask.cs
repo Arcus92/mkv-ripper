@@ -86,4 +86,9 @@ public class ExportSubtitleFromVideoTask : IExportMediaTask
     {
         return new ExportSubtitleFromVideoTask(source, streamIndex, language, ".sup", "sup");
     }
+    
+    public static ExportSubtitleFromVideoTask Ass(MediaSource source, int streamIndex, string language)
+    {
+        return new ExportSubtitleFromVideoTask(source, streamIndex, language, ".ass", "ass");
+    }
 }

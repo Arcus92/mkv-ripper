@@ -88,6 +88,10 @@ public class MediaSource
             {
                 yield return ExportSubtitleFromVideoTask.Srt(this, subIndex, language);
             }
+            else if (stream.Format.StartsWith("ass"))
+            {
+                yield return ExportSubtitleFromVideoTask.Ass(this, subIndex, language);
+            }
             else if (stream.Format.StartsWith("hdmv_pgs_subtitle"))
             {
                 var pgs = ExportSubtitleFromVideoTask.Pgs(this, subIndex, language);
