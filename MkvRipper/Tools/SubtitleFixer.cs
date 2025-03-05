@@ -42,7 +42,7 @@ public class SubtitleFixer
         
         // Collect all subtitles and extract the language and track number.
         var allSubtitles = new List<SubtitleFile>();
-        foreach (var file in output.EnumerateFiles(mainExtension).Order())
+        foreach (var file in output.EnumerateFiles(extensions).Order())
         {
             var indexExt = file.LastIndexOf('.');
             if (indexExt < 0) continue;
@@ -54,6 +54,9 @@ public class SubtitleFixer
             var language = file.Substring(indexLang + 1, indexExt - indexLang - 1);
             var trackName = file.Substring(indexTrack + 1, indexLang - indexTrack - 1);
             if (!int.TryParse(trackName, out var trackNumber)) continue;
+            
+            if (allSubtitles.Any(x => x.Language == language && x.TrackNumber == trackNumber))
+                continue;
 
             var fileInfo = new FileInfo(file);
             var fileSize = fileInfo.Length;

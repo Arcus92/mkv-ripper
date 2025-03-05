@@ -77,6 +77,26 @@ public class MediaOutput
                 yield return path;
         }
     }
+    
+    /// <summary>
+    /// Returns all files from this output with one of the given file extensions.
+    /// </summary>
+    /// <param name="extensions">The list of file extensions.</param>
+    /// <returns></returns>
+    public IEnumerable<string> EnumerateFiles(params string[] extensions)
+    {
+        var baseName = $"{BaseName}.";
+        foreach (var path in System.IO.Directory.EnumerateFiles(Directory.Path))
+        {
+            var fileName = Path.GetFileName(path);
+            if (!fileName.StartsWith(baseName)) continue;
+            foreach (var extension in extensions)
+            {
+                if (fileName.EndsWith(extension, StringComparison.OrdinalIgnoreCase))
+                    yield return path;
+            }
+        }
+    }
 
     /// <summary>
     /// Renames all files from the output.
